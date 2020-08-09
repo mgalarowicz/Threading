@@ -5,7 +5,10 @@ namespace Threading
 {
     class Program
     {
+        //static - shared between both threads
         static int count = 0;
+
+        static object baton = new object();
 
         static void Main(string[] args)
         {
@@ -20,10 +23,13 @@ namespace Threading
         {
             while (true)
             {
-                int temp = count;
-                Thread.Sleep(1000);
-                count = temp + 1;
-                Console.WriteLine("Thread ID " + Thread.CurrentThread.ManagedThreadId + " incremented count to " + count);
+                lock (baton)
+                {
+                    int temp = count;
+                    Thread.Sleep(1000);
+                    count = temp + 1;
+                    Console.WriteLine("Thread ID " + Thread.CurrentThread.ManagedThreadId + " incremented count to " + count); 
+                }
                 Thread.Sleep(1000);
             }
         }
