@@ -5,33 +5,29 @@ namespace Threading
 {
     class Program
     {
-        //static - shared between both threads
-        static int count = 0;
-
         static object baton = new object();
+        static Random rand = new Random();
 
         static void Main(string[] args)
         {
-            var thread1 = new Thread(IncrementCount);
-            var thread2 = new Thread(IncrementCount);
-            thread1.Start();
-            Thread.Sleep(500);
-            thread2.Start();
+            for (int i = 0; i < 5; i++)
+            {
+                new Thread(UseRestroomStall).Start();
+            }
         }
 
-        static void IncrementCount()
+        static void UseRestroomStall()
         {
-            while (true)
+            Console.WriteLine(Thread.CurrentThread.ManagedThreadId + " trying to obtain the bathroom stall...");
+
+            lock (baton)
             {
-                lock (baton)
-                {
-                    int temp = count;
-                    Thread.Sleep(1000);
-                    count = temp + 1;
-                    Console.WriteLine("Thread ID " + Thread.CurrentThread.ManagedThreadId + " incremented count to " + count); 
-                }
-                Thread.Sleep(1000);
+                Console.WriteLine(Thread.CurrentThread.ManagedThreadId + " obtained the lock. Doing my business...");
+                Thread.Sleep(rand.Next(2000));
+                Console.WriteLine(Thread.CurrentThread.ManagedThreadId + " leaving the stall...");
             }
+            Console.WriteLine(Thread.CurrentThread.ManagedThreadId + " is leaving the restaurant.");
+
         }
     }
 }
