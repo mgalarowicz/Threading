@@ -5,25 +5,27 @@ namespace Threading
 {
     class Program
     {
+        static int count = 0;
+
         static void Main(string[] args)
         {
-            Console.WriteLine(Thread.CurrentThread.ManagedThreadId);
-            for (int i = 0; i < Environment.ProcessorCount; i++)
-            {
-                var thread = new Thread(DifferentMethod);
-                //ForeGround threads are the 'main' threads and console will not shot down after the end of the Main() thread.
-                //In other hand, Backround threads will be terminated with console atfer Main() thread comes to the end.
-                thread.IsBackground = true;
-                thread.Start(i);
-            }
-
-            Console.WriteLine("Leaving Main");   
+            var thread1 = new Thread(IncrementCount);
+            var thread2 = new Thread(IncrementCount);
+            thread1.Start();
+            Thread.Sleep(500);
+            thread2.Start();
         }
 
-        static void DifferentMethod(object threadId)
+        static void IncrementCount()
         {
             while (true)
-                Console.WriteLine($"Hello from different method: {Thread.CurrentThread.ManagedThreadId}");
+            {
+                int temp = count;
+                Thread.Sleep(1000);
+                count = temp + 1;
+                Console.WriteLine("Thread ID " + Thread.CurrentThread.ManagedThreadId + " incremented count to " + count);
+                Thread.Sleep(1000);
+            }
         }
     }
 }
