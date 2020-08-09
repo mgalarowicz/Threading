@@ -7,13 +7,20 @@ namespace Threading
     {
         static void Main(string[] args)
         {
-            var thread = new Thread(DifferentMethod);
-            thread.Start();
+            for (int i = 0; i < 8; i++)
+            {
+                var thread = new Thread(DifferentMethod);
+                thread.Start(i);
+            }
+            
+            while (true)
+                Console.WriteLine("Hello from Main()");
         }
 
-        static void DifferentMethod()
+        static void DifferentMethod(object threadId)
         {
-            Console.WriteLine("Hello World!");
+            while (true)
+                Console.WriteLine($"Hello from different method: {threadId}");
         }
     }
 }
