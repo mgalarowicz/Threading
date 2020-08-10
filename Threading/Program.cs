@@ -6,28 +6,21 @@ namespace Threading
     class Program
     {
         static object baton = new object();
-        static Random rand = new Random();
 
         static void Main(string[] args)
         {
-            for (int i = 0; i < 5; i++)
+            //lock (baton)
+            bool lockTaken = false;
+            Monitor.Enter(baton, ref lockTaken);
+            try
             {
-                new Thread(UseRestroomStall).Start();
+                Console.WriteLine("Got the baton");
             }
-        }
-
-        static void UseRestroomStall()
-        {
-            Console.WriteLine(Thread.CurrentThread.ManagedThreadId + " trying to obtain the bathroom stall...");
-
-            lock (baton)
+            finally
             {
-                Console.WriteLine(Thread.CurrentThread.ManagedThreadId + " obtained the lock. Doing my business...");
-                Thread.Sleep(rand.Next(2000));
-                Console.WriteLine(Thread.CurrentThread.ManagedThreadId + " leaving the stall...");
+                if (lockTaken)
+                    Monitor.Exit(baton);
             }
-            Console.WriteLine(Thread.CurrentThread.ManagedThreadId + " is leaving the restaurant.");
-
         }
     }
 }
