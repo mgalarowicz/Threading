@@ -21,7 +21,8 @@ namespace Threading
         {
             long sum = 0;
             int portionNumberAsInt = (int)portionNumber;
-            for (int i = portionNumberAsInt * portionSize; i < portionNumberAsInt * portionSize + portionSize; i++)
+            int baseIndex = portionNumberAsInt * portionSize;
+            for (int i = baseIndex; i < baseIndex + portionSize; i++)
             {
                 sum += values[i];
             }
@@ -35,10 +36,37 @@ namespace Threading
             Console.WriteLine("Summing...");
             Stopwatch watch = new Stopwatch();
             watch.Start();
-            long total = values.Aggregate<byte, long>(0, (current, t) => current + t);
+            long total1 = values.Aggregate<byte, long>(0, (current, t) => current + t);
             watch.Stop();
-            Console.WriteLine("Total value is: " + total);
+            Console.WriteLine("Total value is: " + total1);
             Console.WriteLine("Time to sum: " + watch.Elapsed);
+            Console.WriteLine();
+
+            watch.Reset();
+            watch.Start();
+            Thread[] threads = new Thread[Environment.ProcessorCount];
+            for (int i = 0; i < Environment.ProcessorCount; i++)
+            {
+                threads[i] = new Thread(SumYourPortion);
+                threads[i].Start(i);
+            }
+
+            for (int i = 0; i < Environment.ProcessorCount; i++)
+            {
+                //I want to wait until you end your job
+                threads[i].Join();
+            }
+
+            long total2 = 0;
+
+            for (int i = 0; i <Environment.ProcessorCount; i++)
+            {
+                total2 += portionResults[i];
+            }
+            watch.Stop();
+            Console.WriteLine("Total value is: " + total2);
+            Console.WriteLine("Time to sum: " + watch.Elapsed);
+
         }
     }
 }
