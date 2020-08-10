@@ -8,6 +8,8 @@ namespace Threading
     class Program
     {
         static byte[] values = new byte[500000000];
+        static long[] portionResults;
+        static int portionSize;
         static void GenerateInts()
         {
             var rand = new Random(987);
@@ -15,8 +17,20 @@ namespace Threading
                 values[i] = (byte)rand.Next(10);
         }
 
+        static void SumYourPortion(object portionNumber)
+        {
+            long sum = 0;
+            int portionNumberAsInt = (int)portionNumber;
+            for (int i = portionNumberAsInt * portionSize; i < portionNumberAsInt * portionSize + portionSize; i++)
+            {
+                sum += values[i];
+            }
+            portionResults[portionNumberAsInt] = sum;
+        }
         static void Main(string[] args)
         {
+            portionResults = new long[Environment.ProcessorCount];
+            portionSize = values.Length / Environment.ProcessorCount;
             GenerateInts();
             Console.WriteLine("Summing...");
             Stopwatch watch = new Stopwatch();
