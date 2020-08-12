@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
@@ -7,65 +9,35 @@ namespace Threading
 {
     class Program
     {
-        static byte[] values = new byte[500000000];
-        static long[] portionResults;
-        static int portionSize;
-        static void GenerateInts()
+        static Queue<int> numbers = new Queue<int>();
+        static Random rand = new Random();
+        const int NumThreads = 3;
+        static int[] sums = new int[NumThreads];
+
+        static void ProduceNumbers()
         {
-            var rand = new Random(987);
-            for (int i = 0; i < values.Length; i++)
-                values[i] = (byte)rand.Next(10);
+            for (int i = 0; i < 25; i++)
+            {
+                numbers.Enqueue(rand.Next(10));
+                Thread.Sleep(rand.Next(1000));
+            }
         }
 
-        static void SumYourPortion(object portionNumber)
+        static void SumNumbers(object threadNumber)
         {
-            long sum = 0;
-            int portionNumberAsInt = (int)portionNumber;
-            int baseIndex = portionNumberAsInt * portionSize;
-            for (int i = baseIndex; i < baseIndex + portionSize; i++)
+            DateTime startTime = DateTime.Now;
+            int mySum = 0;
+            while ((DateTime.Now - startTime).Seconds < 11)
             {
-                sum += values[i];
+                if (numbers.Count != 0)
+                    mySum += numbers.Dequeue();
             }
-            portionResults[portionNumberAsInt] = sum;
+            sums[(int)threadNumber] = mySum;
         }
+
         static void Main(string[] args)
         {
-            portionResults = new long[Environment.ProcessorCount];
-            portionSize = values.Length / Environment.ProcessorCount;
-            GenerateInts();
-            Console.WriteLine("Summing...");
-            Stopwatch watch = new Stopwatch();
-            watch.Start();
-            long total1 = values.Aggregate<byte, long>(0, (current, t) => current + t);
-            watch.Stop();
-            Console.WriteLine("Total value is: " + total1);
-            Console.WriteLine("Time to sum: " + watch.Elapsed);
-            Console.WriteLine();
-
-            watch.Reset();
-            watch.Start();
-            Thread[] threads = new Thread[Environment.ProcessorCount];
-            for (int i = 0; i < Environment.ProcessorCount; i++)
-            {
-                threads[i] = new Thread(SumYourPortion);
-                threads[i].Start(i);
-            }
-
-            for (int i = 0; i < Environment.ProcessorCount; i++)
-            {
-                //I want to wait until you end your job
-                threads[i].Join();
-            }
-
-            long total2 = 0;
-
-            for (int i = 0; i <Environment.ProcessorCount; i++)
-            {
-                total2 += portionResults[i];
-            }
-            watch.Stop();
-            Console.WriteLine("Total value is: " + total2);
-            Console.WriteLine("Time to sum: " + watch.Elapsed);
+           
 
         }
     }
