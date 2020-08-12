@@ -16,9 +16,11 @@ namespace Threading
 
         static void ProduceNumbers()
         {
-            for (int i = 0; i < 25; i++)
+            for (int i = 0; i < 10; i++)
             {
-                numbers.Enqueue(rand.Next(10));
+                int numToEnqueue = rand.Next(10);
+                Console.WriteLine($"Producing thread adding {numToEnqueue} to the queue.");
+                numbers.Enqueue(numToEnqueue);
                 Thread.Sleep(rand.Next(1000));
             }
         }
@@ -30,14 +32,40 @@ namespace Threading
             while ((DateTime.Now - startTime).Seconds < 11)
             {
                 if (numbers.Count != 0)
-                    mySum += numbers.Dequeue();
+                {
+                    int numToSum = numbers.Dequeue();
+                    mySum += numToSum;
+                    Console.WriteLine($"Consuming thread adding {numToSum} to its total sum" +
+                                      $"making {mySum} for the thread total.");
+                }
             }
             sums[(int)threadNumber] = mySum;
         }
 
         static void Main(string[] args)
         {
-           
+           var producingThread = new Thread(ProduceNumbers);
+           producingThread.Start();
+           Thread[] threads = new Thread[NumThreads];
+
+           for (int i = 0; i < NumThreads; i++)
+           {
+               threads[i] = new Thread(SumNumbers);
+               threads[i].Start(i);
+           }
+
+           for (int i = 0; i < NumThreads; i++)
+           {
+               threads[i].Join();
+           }
+
+           int totalSum = 0;
+           for (int i = 0; i < NumThreads; i++)
+           {
+               totalSum += sums[i];
+           }
+
+           Console.WriteLine($"Done adding. Total is {totalSum}");
 
         }
     }
