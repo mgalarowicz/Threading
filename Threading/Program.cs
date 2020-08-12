@@ -10,7 +10,7 @@ namespace Threading
     class Program
     {
         static Queue<int> numbers = new Queue<int>();
-        static Random rand = new Random();
+        static Random rand = new Random(999);
         const int NumThreads = 3;
         static int[] sums = new int[NumThreads];
 
@@ -31,13 +31,17 @@ namespace Threading
             int mySum = 0;
             while ((DateTime.Now - startTime).Seconds < 11)
             {
-                if (numbers.Count != 0)
+                lock (numbers)
                 {
-                    int numToSum = numbers.Dequeue();
-                    mySum += numToSum;
-                    Console.WriteLine($"Consuming thread adding {numToSum} to its total sum" +
-                                      $"making {mySum} for the thread total.");
+                    if (numbers.Count != 0)
+                    {
+                        int numToSum = numbers.Dequeue();
+                        mySum += numToSum;
+                        Console.WriteLine($"Consuming thread #{threadNumber} adding {numToSum} to its total sum" +
+                                          $"making {mySum} for the thread total.");
+                    }
                 }
+                
             }
             sums[(int)threadNumber] = mySum;
         }
