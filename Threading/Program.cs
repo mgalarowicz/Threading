@@ -31,45 +31,50 @@ namespace Threading
             int mySum = 0;
             while ((DateTime.Now - startTime).Seconds < 11)
             {
+                int numToSum = -1;
+
                 lock (numbers)
                 {
                     if (numbers.Count != 0)
                     {
-                        int numToSum = numbers.Dequeue();
-                        mySum += numToSum;
-                        Console.WriteLine($"Consuming thread #{threadNumber} adding {numToSum} to its total sum" +
-                                          $"making {mySum} for the thread total.");
+                        numToSum = numbers.Dequeue();
                     }
                 }
-                
+
+                if (numToSum > -1)
+                {
+                    mySum += numToSum;
+                    Console.WriteLine($"Consuming thread #{threadNumber} adding {numToSum} to its total sum" +
+                                      $"making {mySum} for the thread total."); 
+                }
             }
             sums[(int)threadNumber] = mySum;
         }
 
         static void Main(string[] args)
         {
-           var producingThread = new Thread(ProduceNumbers);
-           producingThread.Start();
-           Thread[] threads = new Thread[NumThreads];
+            var producingThread = new Thread(ProduceNumbers);
+            producingThread.Start();
+            Thread[] threads = new Thread[NumThreads];
 
-           for (int i = 0; i < NumThreads; i++)
-           {
-               threads[i] = new Thread(SumNumbers);
-               threads[i].Start(i);
-           }
+            for (int i = 0; i < NumThreads; i++)
+            {
+                threads[i] = new Thread(SumNumbers);
+                threads[i].Start(i);
+            }
 
-           for (int i = 0; i < NumThreads; i++)
-           {
-               threads[i].Join();
-           }
+            for (int i = 0; i < NumThreads; i++)
+            {
+                threads[i].Join();
+            }
 
-           int totalSum = 0;
-           for (int i = 0; i < NumThreads; i++)
-           {
-               totalSum += sums[i];
-           }
+            int totalSum = 0;
+            for (int i = 0; i < NumThreads; i++)
+            {
+                totalSum += sums[i];
+            }
 
-           Console.WriteLine($"Done adding. Total is {totalSum}");
+            Console.WriteLine($"Done adding. Total is {totalSum}");
 
         }
     }
