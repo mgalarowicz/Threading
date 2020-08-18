@@ -40,9 +40,11 @@ namespace Threading
 
         private static void TheWeirdGuy()
         {
-            //lock means - "are you gonna respect my privacy?" :) 
-            lock (stall)
-                stall.BeUsed(99);
+            //lock on a object - it's not locking the object. What it is really locking on is CLR resource
+            //called synchronization block (structures that CLR actually uses to enforce mutual exclusion between all the threads
+            Monitor.Enter(stall); 
+            stall.BeUsed(99);
+            Monitor.Exit(stall);
         }
 
     }
