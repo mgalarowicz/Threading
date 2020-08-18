@@ -32,17 +32,18 @@ namespace Threading
             new Thread(TheWeirdGuy).Start();
         }
 
-        private static void TheWeirdGuy()
-        {
-            stall.BeUsed(99);
-        }
-
         static void RegularUsers()
         {
-            //lock means - "are you gonna respect my privacy?" :) 
-            //lock (stall)
+            lock (stall)
                 stall.BeUsed(Thread.CurrentThread.ManagedThreadId);
         }
-        
+
+        private static void TheWeirdGuy()
+        {
+            //lock means - "are you gonna respect my privacy?" :) 
+            lock (stall)
+                stall.BeUsed(99);
+        }
+
     }
 }
