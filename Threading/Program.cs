@@ -20,7 +20,8 @@ namespace Threading
             {
                 int numToEnqueue = rand.Next(10);
                 Console.WriteLine($"Producing thread adding {numToEnqueue} to the queue.");
-                numbers.Enqueue(numToEnqueue);
+                lock (numbers)
+                    numbers.Enqueue(numToEnqueue);
                 Thread.Sleep(rand.Next(1000));
             }
         }
