@@ -7,76 +7,42 @@ using System.Threading;
 
 namespace Threading
 {
+    class BathroomStall
+    {
+        public void BeUsed(int userNumber)
+        {
+            for (int i = 0; i < 5; i++)
+            {
+                Console.WriteLine("Being used by " + userNumber);
+                Thread.Sleep(500);
+            }
+        }
+    }
+
     class Program
     {
-        static Queue<int> numbers = new Queue<int>();
-        static Random rand = new Random(999);
-        const int NumThreads = 3;
-        static int[] sums = new int[NumThreads];
+        static BathroomStall stall = new BathroomStall();
 
-        static void ProduceNumbers()
+        static void Main()
         {
-            for (int i = 0; i < 10; i++)
+            for (int i = 0; i < 3; i++)
             {
-                int numToEnqueue = rand.Next(10);
-                Console.WriteLine($"Producing thread adding {numToEnqueue} to the queue.");
-                lock (numbers)
-                    numbers.Enqueue(numToEnqueue);
-                Thread.Sleep(rand.Next(1000));
+                new Thread(RegularUsers).Start();
             }
+            new Thread(TheWeirdGuy).Start();
         }
 
-        static void SumNumbers(object threadNumber)
+        private static void TheWeirdGuy()
         {
-            DateTime startTime = DateTime.Now;
-            int mySum = 0;
-            while ((DateTime.Now - startTime).Seconds < 11)
-            {
-                int numToSum = -1;
-
-                lock (numbers)
-                {
-                    if (numbers.Count != 0)
-                    {
-                        numToSum = numbers.Dequeue();
-                    }
-                }
-
-                if (numToSum > -1)
-                {
-                    mySum += numToSum;
-                    Console.WriteLine($"Consuming thread #{threadNumber} adding {numToSum} to its total sum" +
-                                      $"making {mySum} for the thread total."); 
-                }
-            }
-            sums[(int)threadNumber] = mySum;
+            stall.BeUsed(99);
         }
 
-        static void Main(string[] args)
+        static void RegularUsers()
         {
-            var producingThread = new Thread(ProduceNumbers);
-            producingThread.Start();
-            Thread[] threads = new Thread[NumThreads];
-
-            for (int i = 0; i < NumThreads; i++)
-            {
-                threads[i] = new Thread(SumNumbers);
-                threads[i].Start(i);
-            }
-
-            for (int i = 0; i < NumThreads; i++)
-            {
-                threads[i].Join();
-            }
-
-            int totalSum = 0;
-            for (int i = 0; i < NumThreads; i++)
-            {
-                totalSum += sums[i];
-            }
-
-            Console.WriteLine($"Done adding. Total is {totalSum}");
-
+            //lock means - "are you gonna respect my privacy?" :) 
+            //lock (stall)
+                stall.BeUsed(Thread.CurrentThread.ManagedThreadId);
         }
+        
     }
 }
