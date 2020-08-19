@@ -1,63 +1,36 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using System.Threading;
 
 namespace Threading
 {
     class BathroomStall
-    { 
-    object baton = new object();
-
-        public void BeUsed()
+    {
+        [MethodImpl(MethodImplOptions.Synchronized)] //allow to use that method only by one thread at the time. It's quite the same behavior as lock(this). 
+        public static void BeUsed()  //in this case (with MethodImpl and static) I'm locking on a type! It's really global! lock (typeof(BathroomStall))
         {
-            //lock (this)  if i lock on this, then for example if I lock reference to an object BathroomStall (outside) in method
-            //CleanSink then I will block to use my methods BeUsed and FlushToilet, and that do not make sense. Thats why we used baton
-            lock (baton)
-                Console.WriteLine("Doing our thing...");
+            Console.WriteLine("Doing our thing...");
+            Thread.Sleep(5000);
         }
+
+        [MethodImpl(MethodImplOptions.Synchronized)]
         public void FlushToilet()
         {
-            lock (baton)
-                Console.WriteLine("Flushing the toilet...");
+            Console.WriteLine("Flushing the toilet...");
+            Thread.Sleep(5000);
         }
     }
 
-    class PublicRestroom
-    {
-        BathroomStall stall1 = new BathroomStall();
-        BathroomStall stall2 = new BathroomStall();
-
-        public void UseStall1()
-        {
-            lock (stall1)
-            {
-                stall1.BeUsed();
-                stall1.FlushToilet();
-            }
-        }
-
-        public void UseStall2()
-        {
-            stall2.BeUsed();
-            stall2.FlushToilet();
-        }
-
-        public void CleanSink()
-        {
-            lock (stall1)
-                Console.WriteLine("Cleaning sink...");
-        }
-    }
     class Program
     {
 
         static void Main(string[] args)
         {
-            var restroom = new PublicRestroom();
-            new Thread(restroom.UseStall1).Start();
-            new Thread(restroom.UseStall2).Start();
-            new Thread(restroom.UseStall1).Start();
-            new Thread(restroom.UseStall2).Start();
+            var stall = new BathroomStall();
+            new Thread(stall.BeUsed).Start();
+            new Thread(stall.FlushToilet).Start();
+
         }
     }
 }
