@@ -4,114 +4,41 @@ using System.Threading;
 
 namespace Threading
 {
-    //In threading two separte operations (non atomic) are always a Danger Zone! For example:
-    //if (numbers.Count != 0)
-    //{
-    //      RIGHT HERE, DANGER ZONE!
-    //    numToSum = numbers.Dequeue();
-    //}
-
-class Program
+    class PublicRestroom
     {
-        static MySynchronizedQueue<int> numbers = new MySynchronizedQueue<int>();
-        static Random rand = new Random(999);
-        const int NumThreads = 3;
-        static int[] sums = new int[NumThreads];
+        //using the same baton on two stalls blocks at the same time both, and that don't make sense
+        object baton = new object();
+        object stall1baton = new object();
+        object stall2baton = new object();
 
-        static void ProduceNumbers()
+        public void UseStall1()
         {
-            for (int i = 0; i < 10; i++)
+            lock (stall1baton)
             {
-                int numToEnqueue = rand.Next(10);
-                Console.WriteLine($"Producing thread adding {numToEnqueue} to the queue.");
-                //indirect way of access synchronization block (through an object on the heap)
-                lock (numbers)
-                    numbers.Enqueue(numToEnqueue);
-                Thread.Sleep(rand.Next(1000));
+                Console.WriteLine("In stall 1");
+                Thread.Sleep(2000);
             }
         }
 
-        static void SumNumbers(object threadNumber)
+        public void UseStall2()
         {
-            DateTime startTime = DateTime.Now;
-            int mySum = 0;
-            while ((DateTime.Now - startTime).Seconds < 11)
+            lock (stall2baton)
             {
-                int numToSum = -1;
-
-                lock (numbers.SyncRoot)
-                {
-                    if (numbers.Count != 0)
-                    {
-                        numToSum = numbers.Dequeue();
-                    }
-                }
-
-                if (numToSum > -1)
-                {
-                    mySum += numToSum;
-                    Console.WriteLine($"Consuming thread #{threadNumber} adding {numToSum} to its total sum" +
-                                      $"making {mySum} for the thread total.");
-                }
+                Console.WriteLine("In stall 2");
+                Thread.Sleep(2000);
             }
-            sums[(int)threadNumber] = mySum;
         }
+    }
+    class Program
+    {
 
         static void Main(string[] args)
         {
-            var producingThread = new Thread(ProduceNumbers);
-            producingThread.Start();
-            Thread[] threads = new Thread[NumThreads];
-
-            for (int i = 0; i < NumThreads; i++)
-            {
-                threads[i] = new Thread(SumNumbers);
-                threads[i].Start(i);
-            }
-
-            for (int i = 0; i < NumThreads; i++)
-            {
-                threads[i].Join();
-            }
-
-            int totalSum = 0;
-            for (int i = 0; i < NumThreads; i++)
-            {
-                totalSum += sums[i];
-            }
-
-            Console.WriteLine($"Done adding. Total is {totalSum}");
-
-        }
-    }
-
-    class MySynchronizedQueue<T>
-    {
-        object baton = new object();
-        Queue<T> theQ = new Queue<T>();
-
-        public void Enqueue(T item)
-        {
-            lock(baton)
-                theQ.Enqueue(item);
-        }
-
-        public T Dequeue()
-        {
-            lock (baton)
-                return theQ.Dequeue();
-        }
-
-        public int Count
-        {
-            get { 
-            lock (baton)
-                return theQ.Count;
-            }
-        }
-        public object SyncRoot
-        {
-            get { return baton; }
+            var restroom = new PublicRestroom();
+            new Thread(restroom.UseStall1).Start();
+            new Thread(restroom.UseStall2).Start();
+            new Thread(restroom.UseStall1).Start();
+            new Thread(restroom.UseStall2).Start();
         }
     }
 }
